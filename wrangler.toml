@@ -10,8 +10,8 @@ run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "gis-quality-analysis-v14"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_name = "gis_quality_analysis_db"
+database_id = "0ed53b48-82c6-4781-b452-cba07034f0e6"
 
 [vars]
 ENVIRONMENT = "production"
