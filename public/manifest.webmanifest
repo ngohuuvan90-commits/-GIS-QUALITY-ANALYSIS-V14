@@ -1,0 +1,16 @@
+{
+  "name": "GIS QUALITY ANALYSIS V14",
+  "short_name": "GIS QUALITY V14",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
