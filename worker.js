@@ -31,8 +31,13 @@ async function handle(req,env){
   // app JavaScript, samples, icons and all other assets require a valid session.
   // Login resources are always public. Never redirect from the login page:
   // this avoids browser redirect loops when a stale/invalid cookie is present.
-  if((p==='/login.js' || p==='/login.html') && (req.method==='GET' || req.method==='HEAD')) {
-    return serveAsset(req,env,p);
+  // Public login routes: accept both the canonical file path and the short
+  // /login alias used by browser navigation and Cloudflare's Visit flow.
+  if((p==='/login' || p==='/login/' || p==='/login.html') && (req.method==='GET' || req.method==='HEAD')) {
+    return serveAsset(req,env,'/login.html');
+  }
+  if(p==='/login.js' && (req.method==='GET' || req.method==='HEAD')) {
+    return serveAsset(req,env,'/login.js');
   }
   if(p==='/api/setup-admin'&&req.method==='POST'){
     if(!env.ADMIN_SETUP_KEY)return json({error:'Chưa cấu hình ADMIN_SETUP_KEY'},503);
@@ -80,7 +85,13 @@ async function handle(req,env){
     if((p==='/' || p==='/index.html') && (req.method==='GET' || req.method==='HEAD')) {
       return serveAsset(req,env,'/login.html');
     }
-    return new Response('Unauthorized - please sign in at /', {status:401,headers:{'cache-control':'no-store','content-type':'text/plain; charset=utf-8'}});
+    // Browser page routes should show the login form instead of a plain 401.
+    // Keep API and static-resource protection strict.
+    const acceptsHtml=(req.headers.get('Accept')||'').includes('text/html');
+    if((req.method==='GET' || req.method==='HEAD') && acceptsHtml && !p.startsWith('/api/')) {
+      return serveAsset(req,env,'/login.html');
+    }
+    return new Response('Unauthorized - please sign in at /login', {status:401,headers:{'cache-control':'no-store','content-type':'text/plain; charset=utf-8'}});
   }
   if(p.startsWith('/api/admin/')){
     if(user.role!=='admin')return json({error:'Không có quyền Admin'},403);
