@@ -29,10 +29,10 @@ async function handle(req,env){
   if(p==='/api/health')return json({ok:true,service:'GIS QA V14'});
   // Only the isolated login shell and its tiny script are public. The app HTML,
   // app JavaScript, samples, icons and all other assets require a valid session.
-  if(p==='/login.js' && req.method==='GET')return serveAsset(req,env,'/login.js');
-  if(p==='/login.html' && req.method==='GET'){
-    if(await userFor(req,env))return Response.redirect(new URL('/',req.url),302);
-    return serveAsset(req,env,'/login.html');
+  // Login resources are always public. Never redirect from the login page:
+  // this avoids browser redirect loops when a stale/invalid cookie is present.
+  if((p==='/login.js' || p==='/login.html') && (req.method==='GET' || req.method==='HEAD')) {
+    return serveAsset(req,env,p);
   }
   if(p==='/api/setup-admin'&&req.method==='POST'){
     if(!env.ADMIN_SETUP_KEY)return json({error:'Chưa cấu hình ADMIN_SETUP_KEY'},503);
@@ -74,8 +74,13 @@ async function handle(req,env){
   const user=await userFor(req,env);
   if(!user){
     if(p.startsWith('/api/'))return json({error:'Cần đăng nhập'},401);
-    if(req.method==='GET'||req.method==='HEAD')return Response.redirect(new URL('/login.html',req.url),302);
-    return new Response('Unauthorized',{status:401,headers:{'cache-control':'no-store'}});
+    // Render the login shell directly for the app entry point. A 200 response
+    // is intentional: chained redirects are unnecessary and can loop behind
+    // proxies or with stale cookies. Other protected assets return 401.
+    if((p==='/' || p==='/index.html') && (req.method==='GET' || req.method==='HEAD')) {
+      return serveAsset(req,env,'/login.html');
+    }
+    return new Response('Unauthorized - please sign in at /', {status:401,headers:{'cache-control':'no-store','content-type':'text/plain; charset=utf-8'}});
   }
   if(p.startsWith('/api/admin/')){
     if(user.role!=='admin')return json({error:'Không có quyền Admin'},403);
@@ -102,7 +107,6 @@ async function handle(req,env){
     return json({error:'Không tìm thấy API'},404);
   }
   // A logged-in session may access the application and its static assets.
-  if(p==='/login.js'||p==='/login.html')return Response.redirect(new URL('/',req.url),302);
   return env.ASSETS.fetch(req);
 }
 export default {async fetch(req,env){try{return await handle(req,env);}catch(error){return json({error:'Lỗi máy chủ',detail:env.ENVIRONMENT==='development'?String(error):undefined},500);}}};
