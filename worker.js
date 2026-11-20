@@ -124,9 +124,12 @@ export default {
   async fetch(req, env) {
     try {
       return await handle(req, env);
-    } catch (error) {
-      console.error("GIS V14 WORKER ERROR:", error);
-      return json({ error: "Lỗi máy chủ" }, 500);
-    }
+   } catch (error) {
+  console.error("GIS V14 WORKER ERROR:", error);
+  return json({
+    error: "Lỗi máy chủ",
+    detail: String(error)
+  }, 500);
+}
   }
 };
