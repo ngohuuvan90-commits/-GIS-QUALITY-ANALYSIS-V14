@@ -120,4 +120,13 @@ async function handle(req,env){
   // A logged-in session may access the application and its static assets.
   return env.ASSETS.fetch(req);
 }
-export default {async fetch(req,env){try{return await handle(req,env);}catch(error){return json({error:'Lỗi máy chủ',detail:env.ENVIRONMENT==='development'?String(error):undefined},500);}}};
+export default {
+  async fetch(req, env) {
+    try {
+      return await handle(req, env);
+    } catch (error) {
+      console.error("GIS V14 WORKER ERROR:", error);
+      return json({ error: "Lỗi máy chủ" }, 500);
+    }
+  }
+};
